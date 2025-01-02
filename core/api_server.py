@@ -1,8 +1,10 @@
+import logging
+
 from flask import Flask, request, jsonify
+
+from modules.analysis_server import analyze_trade_data
 from modules.data_manager import RealTimeDataManager
 from modules.trade_manager import FastTradeManager
-from modules.analysis_server import analyze_trade_data
-import logging
 
 app = Flask(__name__)
 

@@ -1,8 +1,10 @@
-import multiprocessing
 import logging
-from real_time_trading import real_time_decision_pipeline
+import multiprocessing
+
 from modules.analysis_server import app as analysis_app
+from modules.real_time_decision import real_time_decision_pipeline
 from train_model import train_model
+
 
 def start_analysis_server():
     """Start the Flask-based analysis API server."""

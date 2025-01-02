@@ -1,6 +1,8 @@
-import tensorflow as tf
-import numpy as np
 import logging
+
+import numpy as np
+import tensorflow as tf
+
 
 class OptimizedModelManager:
     def __init__(self, model_path="models/trading_model.tflite"):

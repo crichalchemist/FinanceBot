@@ -1,40 +1,20 @@
+import logging
+import time
+
 from data_manager import RealTimeDataManager
 from model_manager import OptimizedModelManager
+from track_performanceDB import track_performance
 from trade_manager import FastTradeManager
-import time
-import logging
 
-def calculate_rule_signal(data):
-    """
-    Calculate a rule-based signal from technical indicators (e.g., RSI, MACD).
-    :param data: Processed data containing features and indicators.
-    :return: Signal score (-1 to 1).
-    """
-    # Example logic for RSI and MACD (simplified)
-    try:
-        rsi = 50  # Placeholder for RSI calculation
-        macd = 0  # Placeholder for MACD calculation
-
-        signal = 0
-        if rsi < 30:  # Oversold
-            signal += 0.5
-        elif rsi > 70:  # Overbought
-            signal -= 0.5
-
-        if macd > 0:  # Bullish momentum
-            signal += 0.5
-        elif macd < 0:  # Bearish momentum
-            signal -= 0.5
-
-        return max(-1, min(1, signal))  # Ensure signal is between -1 and 1
-    except Exception as e:
-        logging.error(f"Error calculating rule signal: {e}")
-        return 0
 
 def real_time_decision_pipeline(symbol, volume, api_url):
     """
-    Real-time trading decision pipeline combining ML and rules-based logic.
+    Real-time trading decision pipeline prioritizing ML insights.
     """
+    # Configuration
+    ml_confidence_threshold = 0.5
+    fallback_threshold = 0.3
+
     # Initialize components
     data_manager = RealTimeDataManager()
     model_manager = OptimizedModelManager()
@@ -42,27 +22,42 @@ def real_time_decision_pipeline(symbol, volume, api_url):
 
     while True:
         try:
-            # Step 1: Fetch and Process Data
+            # Fetch and process market data
             tick_data = data_manager.fetch_tick_data(symbol)
             processed_data = data_manager.calculate_custom_indicators(tick_data)
             features = processed_data[['mid_price', 'spread', 'momentum']].to_dict('records')[0]
 
-            # Step 2: Machine Learning Prediction
+            # ML prediction
             ml_prediction = model_manager.predict([[features['mid_price'], features['spread'], features['momentum']]])[0]
 
-            # Step 3: Rules-Based Signal
+            # Fallback to rules-based signal
             rule_signal = calculate_rule_signal(processed_data)
 
-            # Step 4: Combine Signals
-            combined_signal = (0.7 * ml_prediction) + (0.3 * rule_signal)
+            # Prioritize ML, use rules as fallback
+            if abs(ml_prediction) >= ml_confidence_threshold:
+                decision_signal = ml_prediction
+                decision_source = "ML"
+            elif abs(rule_signal) >= fallback_threshold:
+                decision_signal = rule_signal
+                decision_source = "Rules"
+            else:
+                decision_signal = 0
+                decision_source = "None"
 
-            # Step 5: Execute Trades
-            if combined_signal > 0.5:
+            # Execute trades and log performance
+            if decision_signal > 0.5:
                 trade_manager.place_trade(symbol, volume, "buy")
-            elif combined_signal < -0.5:
+                trade_outcome = "profit"  # Placeholder for outcome
+            elif decision_signal < -0.5:
                 trade_manager.place_trade(symbol, volume, "sell")
+                trade_outcome = "profit"  # Placeholder for outcome
+            else:
+                trade_outcome = "no_trade"
+
+            # Track performance
+            track_performance(decision_source, decision_signal, trade_outcome)
 
             # Sleep for loop efficiency
-            time.sleep(0.05)  # Adjust to ensure <80ms total time
+            time.sleep(0.05)
         except Exception as e:
-            logging.error(f"Error in real-time decision pipeline: {e}")
+            logging.error(f"Error in decision pipeline: {e}")

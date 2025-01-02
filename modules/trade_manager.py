@@ -1,5 +1,6 @@
-import MetaTrader5 as mt5
 import logging
+
+import MetaTrader5 as mt5
 
 
 class FastTradeManager:
