@@ -1,5 +1,7 @@
-import requests
 import logging
+
+import requests
+
 
 class DataUploader:
     def __init__(self, api_url):

@@ -2,7 +2,7 @@ import logging
 import multiprocessing
 
 from modules.analysis_server import app as analysis_app
-from modules.real_time_decision import real_time_decision_pipeline
+import modules.real_time_decision
 from train_model import train_model
 
 
@@ -14,7 +14,7 @@ def start_analysis_server():
 def start_decision_pipeline(symbol, volume, api_url):
     """Start the real-time decision pipeline."""
     logging.info(f"Starting the decision pipeline for {symbol}...")
-    real_time_decision_pipeline(symbol=symbol, volume=volume, api_url=api_url)
+    modules.real_time_decision.real_time_decision_pipeline(symbol=symbol, volume=volume, api_url=api_url)
 
 def start_training_process():
     """Start the model training process."""

@@ -1,0 +1,27 @@
+FinanceBot/
+├── modules/
+│   ├── __init__.py                 # To define this as a Python package
+│   ├── analysis_server.py          # Flask server for analysis
+│   ├── combined_decision_pipeline.py  # Core decision pipeline
+│   ├── data_manager.py             # Manages data from MetaTrader5
+│   ├── data_uploader.py            # Sends trade data to external server
+│   ├── logging_config.py           # Centralized logging configuration
+│   ├── model_manager.py            # Manages ML models (e.g., TensorFlow Lite)
+│   ├── real_time_decision.py       # Real-time decision-making pipeline
+│   ├── track_performanceDB.py      # Logs trade performance to PostgreSQL
+│   ├── trade_manager.py            # Handles trade execution
+├── scripts/
+│   ├── __init__.py                 # To define this as a package if needed
+│   ├── api_server.py               # Script to start the API server
+│   ├── run_all.py                  # Orchestrates the entire system
+│   ├── train_model.py              # Training pipeline for ML models
+├── requirements.txt                # Python dependencies
+├── setup.py                        # Installation script
+├── README.md                       # Project documentation
+├── logs/                           # Directory for log files
+│   ├── app.log                     # Log file for centralized logging
+├── models/                         # Directory for ML models
+│   ├── trading_model.tflite        # TensorFlow Lite model
+├── data/                           # Placeholder for data files
+│   ├── trade_data.csv              # Example trade data file
+

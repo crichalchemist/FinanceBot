@@ -1,13 +1,14 @@
 import logging
 import time
 
-from data_manager import RealTimeDataManager
-from model_manager import OptimizedModelManager
-from track_performanceDB import track_performance
-from trade_manager import FastTradeManager
+from modules.data_manager import RealTimeDataManager
+from modules.model_manager import OptimizedModelManager
+from modules.track_performanceDB import track_performance
+from modules.trade_manager import FastTradeManager
 
 
-def real_time_decision_pipeline(symbol, volume, api_url):
+
+def real_time_decision_pipeline(symbol, volume):
     """
     Real-time trading decision pipeline prioritizing ML insights.
     """
@@ -61,3 +62,7 @@ def real_time_decision_pipeline(symbol, volume, api_url):
             time.sleep(0.05)
         except Exception as e:
             logging.error(f"Error in decision pipeline: {e}")
+
+
+# Exportable for external imports
+__all__ = ["real_time_decision_pipeline"]
