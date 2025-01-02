@@ -1,0 +1,3 @@
+{
+  "error": "Exception encountered when calling Sequential.call().\n\n[1mInput 0 of layer \"dense\" is incompatible with the layer: expected axis -1 of input shape to have value 9, but received input with shape (1, 8)[0m\n\nArguments received by Sequential.call():\n  • inputs=tf.Tensor(shape=(1, 8), dtype=float32)\n  • training=False\n  • mask=None"
+}

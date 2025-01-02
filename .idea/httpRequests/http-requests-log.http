@@ -1,0 +1,96 @@
+POST http://127.0.0.1:5000/predict
+Content-Type: application/json
+Content-Length: 229
+User-Agent: IntelliJ HTTP Client/PyCharm 2024.3.1.1
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+
+{
+    "features": {
+        "RSI": 50.1,
+        "MACD": 0.05,
+        "Signal_Line": 0.02,
+        "BB_High": 150.2,
+        "BB_Low": 148.7,
+        "SMA_20": 149.5,
+        "EMA_20": 149.7,
+        "Hourly_Trend": 0.15
+    }
+}
+
+<> 2024-12-31T105405.400.json
+
+###
+
+POST http://127.0.0.1:5000/predict
+Content-Type: application/json
+Content-Length: 229
+User-Agent: IntelliJ HTTP Client/PyCharm 2024.3.1.1
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+
+{
+    "features": {
+        "RSI": 50.1,
+        "MACD": 0.05,
+        "Signal_Line": 0.02,
+        "BB_High": 150.2,
+        "BB_Low": 148.7,
+        "SMA_20": 149.5,
+        "EMA_20": 149.7,
+        "Hourly_Trend": 0.15
+    }
+}
+
+<> 2024-12-31T105347.400.json
+
+###
+
+POST http://127.0.0.1:5000/predict
+Content-Type: application/json
+Content-Length: 229
+User-Agent: IntelliJ HTTP Client/PyCharm 2024.3.1.1
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+
+{
+    "features": {
+        "RSI": 50.1,
+        "MACD": 0.05,
+        "Signal_Line": 0.02,
+        "BB_High": 150.2,
+        "BB_Low": 148.7,
+        "SMA_20": 149.5,
+        "EMA_20": 149.7,
+        "Hourly_Trend": 0.15
+    }
+}
+
+<> 2024-12-31T104525.400.json
+
+###
+
+POST http://127.0.0.1:5000/predict
+Content-Type: application/json
+Content-Length: 229
+User-Agent: IntelliJ HTTP Client/PyCharm 2024.3.1.1
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+
+{
+    "features": {
+        "RSI": 50.1,
+        "MACD": 0.05,
+        "Signal_Line": 0.02,
+        "BB_High": 150.2,
+        "BB_Low": 148.7,
+        "SMA_20": 149.5,
+        "EMA_20": 149.7,
+        "Hourly_Trend": 0.15
+    }
+}
+
+<> 2024-12-31T104059.500.json
+
+###
+
