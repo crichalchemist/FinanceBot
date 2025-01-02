@@ -1,0 +1,551 @@
+Index: core/run_all.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import multiprocessing\nimport logging\nfrom real_time_trading import real_time_decision_pipeline\nfrom modules.analysis_server import app as analysis_app\nfrom train_model import train_model\n\ndef start_analysis_server():\n    \"\"\"Start the Flask-based analysis API server.\"\"\"\n    logging.info(\"Starting the analysis server...\")\n    analysis_app.run(host='0.0.0.0', port=5001, debug=False)\n\ndef start_decision_pipeline(symbol, volume, api_url):\n    \"\"\"Start the real-time decision pipeline.\"\"\"\n    logging.info(f\"Starting the decision pipeline for {symbol}...\")\n    real_time_decision_pipeline(symbol=symbol, volume=volume, api_url=api_url)\n\ndef start_training_process():\n    \"\"\"Start the model training process.\"\"\"\n    logging.info(\"Starting the model training process...\")\n    train_model()\n\nif __name__ == '__main__':\n    logging.basicConfig(\n        level=logging.INFO,\n        format=\"%(asctime)s - %(name)s - %(levelname)s - %(message)s\"\n    )\n\n    # Configuration\n    symbol = \"EURUSD\"\n    volume = 0.1\n    api_url = \"http://localhost:5001/api/trade_data\"\n\n    # Create processes for analysis server, decision pipeline, and model training\n    analysis_server_process = multiprocessing.Process(target=start_analysis_server)\n    decision_pipeline_process = multiprocessing.Process(\n        target=start_decision_pipeline,\n        args=(symbol, volume, api_url)\n    )\n    training_process = multiprocessing.Process(target=start_training_process)\n\n    # Start processes\n    analysis_server_process.start()\n    decision_pipeline_process.start()\n    training_process.start()\n\n    # Wait for processes to complete\n    analysis_server_process.join()\n    decision_pipeline_process.join()\n    training_process.join()\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/core/run_all.py b/core/run_all.py
+--- a/core/run_all.py	(revision edba54de4d96a2023ac223b007b6549ff8b188c8)
++++ b/core/run_all.py	(date 1735848230594)
+@@ -1,9 +1,11 @@
+-import multiprocessing
+ import logging
+-from real_time_trading import real_time_decision_pipeline
++import multiprocessing
++
+ from modules.analysis_server import app as analysis_app
++from modules.real_time_decision import real_time_decision_pipeline
+ from train_model import train_model
+ 
++
+ def start_analysis_server():
+     """Start the Flask-based analysis API server."""
+     logging.info("Starting the analysis server...")
+Index: modules/trade_manager.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import MetaTrader5 as mt5\nimport logging\n\n\nclass FastTradeManager:\n    def __init__(self):\n        if not mt5.initialize():\n            raise RuntimeError(\"Failed to initialize MetaTrader 5.\")\n        logging.info(\"FastTradeManager initialized.\")\n\n    def place_trade(self, symbol, volume, direction):\n        \"\"\"Place trades quickly.\"\"\"\n        order_type = mt5.ORDER_BUY if direction == \"buy\" else mt5.ORDER_SELL\n        price = mt5.symbol_info_tick(symbol).ask if direction == \"buy\" else mt5.symbol_info_tick(symbol).bid\n\n        request = {\n            \"action\": mt5.TRADE_ACTION_DEAL,\n            \"symbol\": symbol,\n            \"volume\": volume,\n            \"type\": order_type,\n            \"price\": price,\n        }\n\n        result = mt5.order_send(request)\n        if result.retcode != mt5.TRADE_RETCODE_DONE:\n            logging.error(f\"Trade failed: {result.comment}\")\n        else:\n            logging.info(f\"Trade placed successfully: {result}\")\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/modules/trade_manager.py b/modules/trade_manager.py
+--- a/modules/trade_manager.py	(revision edba54de4d96a2023ac223b007b6549ff8b188c8)
++++ b/modules/trade_manager.py	(date 1735848230627)
+@@ -1,6 +1,7 @@
+-import MetaTrader5 as mt5
+ import logging
+ 
++import MetaTrader5 as mt5
++
+ 
+ class FastTradeManager:
+     def __init__(self):
+Index: modules/model_manager.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import tensorflow as tf\nimport numpy as np\nimport logging\n\nclass OptimizedModelManager:\n    def __init__(self, model_path=\"models/trading_model.tflite\"):\n        self.model_path = model_path\n        self.interpreter = tf.lite.Interpreter(model_path=model_path)\n        self.interpreter.allocate_tensors()\n        self.input_index = self.interpreter.get_input_details()[0]['index']\n        self.output_index = self.interpreter.get_output_details()[0]['index']\n        logging.info(\"OptimizedModelManager initialized.\")\n\n    def predict(self, features):\n        \"\"\"\n        Run inference using the TensorFlow Lite model.\n        :param features: Input features as a 2D array.\n        :return: Prediction scores.\n        \"\"\"\n        try:\n            self.interpreter.set_tensor(self.input_index, np.array(features, dtype=np.float32))\n            self.interpreter.invoke()\n            return self.interpreter.get_tensor(self.output_index)\n        except Exception as e:\n            logging.error(f\"Error during model prediction: {e}\")\n            return [0]  # Default to neutral prediction on failure\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/modules/model_manager.py b/modules/model_manager.py
+--- a/modules/model_manager.py	(revision edba54de4d96a2023ac223b007b6549ff8b188c8)
++++ b/modules/model_manager.py	(date 1735848230587)
+@@ -1,7 +1,9 @@
+-import tensorflow as tf
+-import numpy as np
+ import logging
+ 
++import numpy as np
++import tensorflow as tf
++
++
+ class OptimizedModelManager:
+     def __init__(self, model_path="models/trading_model.tflite"):
+         self.model_path = model_path
+Index: modules/real_time_decision.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>from data_manager import RealTimeDataManager\nfrom model_manager import OptimizedModelManager\nfrom trade_manager import FastTradeManager\nimport time\nimport logging\n\ndef calculate_rule_signal(data):\n    \"\"\"\n    Calculate a rule-based signal from technical indicators (e.g., RSI, MACD).\n    :param data: Processed data containing features and indicators.\n    :return: Signal score (-1 to 1).\n    \"\"\"\n    # Example logic for RSI and MACD (simplified)\n    try:\n        rsi = 50  # Placeholder for RSI calculation\n        macd = 0  # Placeholder for MACD calculation\n\n        signal = 0\n        if rsi < 30:  # Oversold\n            signal += 0.5\n        elif rsi > 70:  # Overbought\n            signal -= 0.5\n\n        if macd > 0:  # Bullish momentum\n            signal += 0.5\n        elif macd < 0:  # Bearish momentum\n            signal -= 0.5\n\n        return max(-1, min(1, signal))  # Ensure signal is between -1 and 1\n    except Exception as e:\n        logging.error(f\"Error calculating rule signal: {e}\")\n        return 0\n\ndef real_time_decision_pipeline(symbol, volume, api_url):\n    \"\"\"\n    Real-time trading decision pipeline combining ML and rules-based logic.\n    \"\"\"\n    # Initialize components\n    data_manager = RealTimeDataManager()\n    model_manager = OptimizedModelManager()\n    trade_manager = FastTradeManager()\n\n    while True:\n        try:\n            # Step 1: Fetch and Process Data\n            tick_data = data_manager.fetch_tick_data(symbol)\n            processed_data = data_manager.calculate_custom_indicators(tick_data)\n            features = processed_data[['mid_price', 'spread', 'momentum']].to_dict('records')[0]\n\n            # Step 2: Machine Learning Prediction\n            ml_prediction = model_manager.predict([[features['mid_price'], features['spread'], features['momentum']]])[0]\n\n            # Step 3: Rules-Based Signal\n            rule_signal = calculate_rule_signal(processed_data)\n\n            # Step 4: Combine Signals\n            combined_signal = (0.7 * ml_prediction) + (0.3 * rule_signal)\n\n            # Step 5: Execute Trades\n            if combined_signal > 0.5:\n                trade_manager.place_trade(symbol, volume, \"buy\")\n            elif combined_signal < -0.5:\n                trade_manager.place_trade(symbol, volume, \"sell\")\n\n            # Sleep for loop efficiency\n            time.sleep(0.05)  # Adjust to ensure <80ms total time\n        except Exception as e:\n            logging.error(f\"Error in real-time decision pipeline: {e}\")\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/modules/real_time_decision.py b/modules/real_time_decision.py
+--- a/modules/real_time_decision.py	(revision edba54de4d96a2023ac223b007b6549ff8b188c8)
++++ b/modules/real_time_decision.py	(date 1735848230624)
+@@ -1,40 +1,20 @@
++import logging
++import time
++
+ from data_manager import RealTimeDataManager
+ from model_manager import OptimizedModelManager
++from track_performanceDB import track_performance
+ from trade_manager import FastTradeManager
+-import time
+-import logging
+-
+-def calculate_rule_signal(data):
+-    """
+-    Calculate a rule-based signal from technical indicators (e.g., RSI, MACD).
+-    :param data: Processed data containing features and indicators.
+-    :return: Signal score (-1 to 1).
+-    """
+-    # Example logic for RSI and MACD (simplified)
+-    try:
+-        rsi = 50  # Placeholder for RSI calculation
+-        macd = 0  # Placeholder for MACD calculation
+ 
+-        signal = 0
+-        if rsi < 30:  # Oversold
+-            signal += 0.5
+-        elif rsi > 70:  # Overbought
+-            signal -= 0.5
+-
+-        if macd > 0:  # Bullish momentum
+-            signal += 0.5
+-        elif macd < 0:  # Bearish momentum
+-            signal -= 0.5
+-
+-        return max(-1, min(1, signal))  # Ensure signal is between -1 and 1
+-    except Exception as e:
+-        logging.error(f"Error calculating rule signal: {e}")
+-        return 0
+ 
+ def real_time_decision_pipeline(symbol, volume, api_url):
+     """
+-    Real-time trading decision pipeline combining ML and rules-based logic.
++    Real-time trading decision pipeline prioritizing ML insights.
+     """
++    # Configuration
++    ml_confidence_threshold = 0.5
++    fallback_threshold = 0.3
++
+     # Initialize components
+     data_manager = RealTimeDataManager()
+     model_manager = OptimizedModelManager()
+@@ -42,27 +22,42 @@
+ 
+     while True:
+         try:
+-            # Step 1: Fetch and Process Data
++            # Fetch and process market data
+             tick_data = data_manager.fetch_tick_data(symbol)
+             processed_data = data_manager.calculate_custom_indicators(tick_data)
+             features = processed_data[['mid_price', 'spread', 'momentum']].to_dict('records')[0]
+ 
+-            # Step 2: Machine Learning Prediction
++            # ML prediction
+             ml_prediction = model_manager.predict([[features['mid_price'], features['spread'], features['momentum']]])[0]
+ 
+-            # Step 3: Rules-Based Signal
++            # Fallback to rules-based signal
+             rule_signal = calculate_rule_signal(processed_data)
+ 
+-            # Step 4: Combine Signals
+-            combined_signal = (0.7 * ml_prediction) + (0.3 * rule_signal)
++            # Prioritize ML, use rules as fallback
++            if abs(ml_prediction) >= ml_confidence_threshold:
++                decision_signal = ml_prediction
++                decision_source = "ML"
++            elif abs(rule_signal) >= fallback_threshold:
++                decision_signal = rule_signal
++                decision_source = "Rules"
++            else:
++                decision_signal = 0
++                decision_source = "None"
+ 
+-            # Step 5: Execute Trades
+-            if combined_signal > 0.5:
++            # Execute trades and log performance
++            if decision_signal > 0.5:
+                 trade_manager.place_trade(symbol, volume, "buy")
+-            elif combined_signal < -0.5:
++                trade_outcome = "profit"  # Placeholder for outcome
++            elif decision_signal < -0.5:
+                 trade_manager.place_trade(symbol, volume, "sell")
++                trade_outcome = "profit"  # Placeholder for outcome
++            else:
++                trade_outcome = "no_trade"
++
++            # Track performance
++            track_performance(decision_source, decision_signal, trade_outcome)
+ 
+             # Sleep for loop efficiency
+-            time.sleep(0.05)  # Adjust to ensure <80ms total time
++            time.sleep(0.05)
+         except Exception as e:
+-            logging.error(f"Error in real-time decision pipeline: {e}")
++            logging.error(f"Error in decision pipeline: {e}")
+Index: .gitignore
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+--- /dev/null	(date 1735804078502)
++++ b/.gitignore	(date 1735804078502)
+@@ -0,0 +1,1 @@
++/MetaTrader5-5.0.39.dist-info/
+Index: modules/track_performanceDB.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/modules/track_performanceDB.py b/modules/track_performanceDB.py
+new file mode 100644
+--- /dev/null	(date 1735848230590)
++++ b/modules/track_performanceDB.py	(date 1735848230590)
+@@ -0,0 +1,37 @@
++import logging
++
++import psycopg2
++
++
++def track_performance(decision_source, signal_value, trade_outcome, trading_performance=None):
++    """
++    Log performance metrics into a PostgreSQL database.
++    :param decision_source: Source of the decision (e.g., "ML" or "Rules").
++    :param signal_value: Signal score used for the decision.
++    :param trade_outcome: Outcome of the trade (e.g., "profit" or "loss").
++    """
++    try:
++        # Connect to PostgreSQL
++        conn = psycopg2.connect(
++            dbname= trading_performance,
++            user= trading_user,
++            password= SQLPW,  # Replace with your PostgreSQL password
++            host= 20.2.84.42
++        )
++        cursor = conn.cursor()
++
++        # Insert performance data
++        insert_query = INSERT INTO trade_performance (decision_source, signal_value, trade_outcome)
++        VALUES (%s, %s, %s)
++
++        cursor.execute(insert_query, (decision_source, signal_value, trade_outcome))
++        conn.commit()
++
++        logging.info(Logged performance: {decision_source}, var = {signal_value}, {trade_outcome}
++        )
++
++        # Close connection
++        cursor.close()
++        conn.close()
++    except Exception as e:
++        logging.error(f"Error logging performance data: {e}")
+Index: MetaTrader5-5.0.39.dist-info/WHEEL
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/MetaTrader5-5.0.39.dist-info/WHEEL b/MetaTrader5-5.0.39.dist-info/WHEEL
+new file mode 100644
+--- /dev/null	(date 1735723008040)
++++ b/MetaTrader5-5.0.39.dist-info/WHEEL	(date 1735723008040)
+@@ -0,0 +1,5 @@
++Wheel-Version: 1.0
++Generator: bdist_wheel (0.41.2)
++Root-Is-Purelib: true
++Tag: py3-none-any
++
+Index: MetaTrader5-5.0.39.dist-info/RECORD
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/MetaTrader5-5.0.39.dist-info/RECORD b/MetaTrader5-5.0.39.dist-info/RECORD
+new file mode 100644
+--- /dev/null	(date 1735723008069)
++++ b/MetaTrader5-5.0.39.dist-info/RECORD	(date 1735723008069)
+@@ -0,0 +1,7 @@
++metatrader5-1.0.0.dist-info/INSTALLER,sha256=zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg,4
++metatrader5-1.0.0.dist-info/METADATA,sha256=fSTi_aWaDXfWRmYHVXGA7l7MAXMJrLOEBtYdEPSMwU0,334
++metatrader5-1.0.0.dist-info/RECORD,,
++metatrader5-1.0.0.dist-info/REQUESTED,sha256=47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU,0
++metatrader5-1.0.0.dist-info/WHEEL,sha256=yQN5g4mg4AybRjkgi-9yy4iQEFibGQmlz78Pik5Or-A,92
++metatrader5-1.0.0.dist-info/direct_url.json,sha256=7UdZvVliEVFj7xs6WRyOJaqS9Njta2SCOti6TjriL84,300
++metatrader5-1.0.0.dist-info/top_level.txt,sha256=AbpHGcgLb-kRsJGnwFEktk7uzpZOCcBY74-YBdrKVGs,1
+Index: MetaTrader5-5.0.39.dist-info/METADATA
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/MetaTrader5-5.0.39.dist-info/METADATA b/MetaTrader5-5.0.39.dist-info/METADATA
+new file mode 100644
+--- /dev/null	(date 1735723008039)
++++ b/MetaTrader5-5.0.39.dist-info/METADATA	(date 1735723008039)
+@@ -0,0 +1,11 @@
++Metadata-Version: 2.1
++Name: metatrader5
++Version: 1.0.0
++Summary: MetaTrader 5 Python API bindings
++Author: Courtney Richardson
++Author-email: crichalchemist@gmail.com
++Classifier: Programming Language :: Python :: 3
++Classifier: License :: OSI Approved :: MIT License
++Classifier: Operating System :: OS Independent
++Requires-Python: >=3.6
++
+Index: MetaTrader5-5.0.39.dist-info/INSTALLER
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/MetaTrader5-5.0.39.dist-info/INSTALLER b/MetaTrader5-5.0.39.dist-info/INSTALLER
+new file mode 100644
+--- /dev/null	(date 1735723008040)
++++ b/MetaTrader5-5.0.39.dist-info/INSTALLER	(date 1735723008040)
+@@ -0,0 +1,1 @@
++pip
+Index: core/train_model.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import tensorflow as tf\nimport pandas as pd\nimport logging\n\ndef train_model():\n    try:\n        # Load historical data\n        data = pd.read_csv(\"historical_data.csv\")\n        X_train = data[[\"feature1\", \"feature2\", \"feature3\"]]\n        y_train = data[\"label\"]\n\n        # Build model\n        model = tf.keras.Sequential([\n            tf.keras.layers.Dense(64, activation=\"relu\", input_shape=(X_train.shape[1],)),\n            tf.keras.layers.Dropout(0.2),\n            tf.keras.layers.Dense(1, activation=\"sigmoid\")\n        ])\n        model.compile(optimizer=\"adam\", loss=\"binary_crossentropy\", metrics=[\"accuracy\"])\n\n        # Train model\n        model.fit(X_train, y_train, epochs=10, batch_size=32)\n        model.save(\"trained_model.h5\")\n        logging.info(\"Model training complete.\")\n    except Exception as e:\n        logging.error(f\"Error training model: {e}\")\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/core/train_model.py b/core/train_model.py
+--- a/core/train_model.py	(revision edba54de4d96a2023ac223b007b6549ff8b188c8)
++++ b/core/train_model.py	(date 1735848230580)
+@@ -1,7 +1,9 @@
+-import tensorflow as tf
+-import pandas as pd
+ import logging
+ 
++import pandas as pd
++import tensorflow as tf
++
++
+ def train_model():
+     try:
+         # Load historical data
+Index: MetaTrader5-5.0.39.dist-info/top_level.txt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/MetaTrader5-5.0.39.dist-info/top_level.txt b/MetaTrader5-5.0.39.dist-info/top_level.txt
+new file mode 100644
+--- /dev/null	(date 1735723008040)
++++ b/MetaTrader5-5.0.39.dist-info/top_level.txt	(date 1735723008040)
+@@ -0,0 +1,1 @@
++
+Index: MetaTrader5-5.0.39.dist-info/direct_url.json
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/MetaTrader5-5.0.39.dist-info/direct_url.json b/MetaTrader5-5.0.39.dist-info/direct_url.json
+new file mode 100644
+--- /dev/null	(date 1735723008062)
++++ b/MetaTrader5-5.0.39.dist-info/direct_url.json	(date 1735723008062)
+@@ -0,0 +1,1 @@
++{"archive_info": {"hash": "sha256=89aacc25f15f708c814c53242f85ddc45e7c0ec4b240fb2164b25107284a55ca", "hashes": {"sha256": "89aacc25f15f708c814c53242f85ddc45e7c0ec4b240fb2164b25107284a55ca"}}, "url": "file:///Users/controlroom/PycharmProjects/MetaTraderforMac/dist/metatrader5-1.0.0-py3-none-any.whl"}
+\ No newline at end of file
+Index: core/api_server.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>from flask import Flask, request, jsonify\nfrom modules.data_manager import RealTimeDataManager\nfrom modules.trade_manager import FastTradeManager\nfrom modules.analysis_server import analyze_trade_data\nimport logging\n\napp = Flask(__name__)\n\ndata_manager = RealTimeDataManager()\ntrade_manager = FastTradeManager()\n\n@app.route('/data', methods=['GET'])\ndef get_data():\n    symbol = request.args.get('symbol')\n    max_ticks = int(request.args.get('max_ticks', 1000))\n    try:\n        data = data_manager.fetch_tick_data(symbol, max_ticks)\n        return data.to_json(), 200\n    except Exception as e:\n        logging.error(f\"Error fetching data: {e}\")\n        return jsonify({\"error\": str(e)}), 500\n\n@app.route('/trade', methods=['POST'])\ndef trade():\n    data = request.json\n    try:\n        result = trade_manager.place_trade(data['symbol'], data['volume'], data['direction'])\n        return jsonify({\"success\": result.retcode == mt5.TRADE_RETCODE_DONE}), 200\n    except Exception as e:\n        logging.error(f\"Error placing trade: {e}\")\n        return jsonify({\"error\": str(e)}), 500\n\n@app.route('/analyze', methods=['GET'])\ndef analyze():\n    try:\n        return jsonify(analyze_trade_data()), 200\n    except Exception as e:\n        logging.error(f\"Error analyzing trades: {e}\")\n        return jsonify({\"error\": str(e)}), 500\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/core/api_server.py b/core/api_server.py
+--- a/core/api_server.py	(revision edba54de4d96a2023ac223b007b6549ff8b188c8)
++++ b/core/api_server.py	(date 1735848230620)
+@@ -1,8 +1,10 @@
++import logging
++
+ from flask import Flask, request, jsonify
++
++from modules.analysis_server import analyze_trade_data
+ from modules.data_manager import RealTimeDataManager
+ from modules.trade_manager import FastTradeManager
+-from modules.analysis_server import analyze_trade_data
+-import logging
+ 
+ app = Flask(__name__)
+ 
+Index: .env
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>OPENAI_API_KEY = \"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\"
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.env b/.env
+--- a/.env	(revision edba54de4d96a2023ac223b007b6549ff8b188c8)
++++ b/.env	(date 1735809224228)
+@@ -1,1 +1,2 @@
+-OPENAI_API_KEY = "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"
+\ No newline at end of file
++OPENAI_API_KEY = "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"
++SQLPW = 3l!zab3th!6
+\ No newline at end of file
+Index: .idea/FinanceBot.iml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<module type=\"PYTHON_MODULE\" version=\"4\">\n  <component name=\"NewModuleRootManager\">\n    <content url=\"file://$MODULE_DIR$\">\n      <excludeFolder url=\"file://$MODULE_DIR$/.venv\" />\n    </content>\n    <orderEntry type=\"jdk\" jdkName=\"Python 3.11 (FinanceBot)\" jdkType=\"Python SDK\" />\n    <orderEntry type=\"sourceFolder\" forTests=\"false\" />\n  </component>\n</module>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/FinanceBot.iml b/.idea/FinanceBot.iml
+--- a/.idea/FinanceBot.iml	(revision edba54de4d96a2023ac223b007b6549ff8b188c8)
++++ b/.idea/FinanceBot.iml	(date 1735845901119)
+@@ -2,6 +2,7 @@
+ <module type="PYTHON_MODULE" version="4">
+   <component name="NewModuleRootManager">
+     <content url="file://$MODULE_DIR$">
++      <sourceFolder url="file://$MODULE_DIR$" isTestSource="false" />
+       <excludeFolder url="file://$MODULE_DIR$/.venv" />
+     </content>
+     <orderEntry type="jdk" jdkName="Python 3.11 (FinanceBot)" jdkType="Python SDK" />
+Index: .idea/webResources.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/webResources.xml b/.idea/webResources.xml
+new file mode 100644
+--- /dev/null	(date 1735846403786)
++++ b/.idea/webResources.xml	(date 1735846403786)
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project version="4">
++  <component name="WebResourcesPaths">
++    <contentEntries>
++      <entry url="file://$PROJECT_DIR$">
++        <entryData>
++          <resourceRoots>
++            <path value="file://$PROJECT_DIR$/modules" />
++          </resourceRoots>
++        </entryData>
++      </entry>
++    </contentEntries>
++  </component>
++</project>
+\ No newline at end of file
+Index: core/real_time_trading.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>from modules.data_manager import RealTimeDataManager\nfrom modules.trade_manager import FastTradeManager\nimport time\nimport logging\n\ndef real_time_trading(symbol, volume):\n    data_manager = RealTimeDataManager()\n    trade_manager = FastTradeManager()\n\n    while True:\n        try:\n            tick_data = data_manager.fetch_tick_data(symbol)\n            processed_data = data_manager.calculate_custom_indicators(tick_data)\n\n            decision_signal = calculate_rule_signal(processed_data)\n\n            if decision_signal > 0.5:\n                trade_manager.place_trade(symbol, volume, \"buy\")\n            elif decision_signal < -0.5:\n                trade_manager.place_trade(symbol, volume, \"sell\")\n\n            time.sleep(1)\n        except Exception as e:\n            logging.error(f\"Error in trading loop: {e}\")\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/core/real_time_trading.py b/core/real_time_trading.py
+--- a/core/real_time_trading.py	(revision edba54de4d96a2023ac223b007b6549ff8b188c8)
++++ b/core/real_time_trading.py	(date 1735847694927)
+@@ -1,24 +1,102 @@
+-from modules.data_manager import RealTimeDataManager
+-from modules.trade_manager import FastTradeManager
++import MetaTrader5 as mt5
+ import time
+ import logging
++from modules.data_manager import RealTimeDataManager
++
++def initialize_mt5():
++    """Initialize MetaTrader 5 connection."""
++    if not mt5.initialize():
++        logging.error("MetaTrader 5 initialization failed")
++        return False
++    return True
++
++def shutdown_mt5():
++    """Shutdown MetaTrader 5 connection."""
++    mt5.shutdown()
++
++def place_mt5_trade(symbol, lot_size, order_type):
++    """Place a trade using MetaTrader 5."""
++    symbol_info = mt5.symbol_info(symbol)
++    if not symbol_info:
++        logging.error(f"Symbol {symbol} not found")
++        return
++
++    # Ensure the symbol is selected
++    if not symbol_info.visible:
++        if not mt5.symbol_select(symbol, True):
++            logging.error(f"Failed to select symbol {symbol}")
++            return
+ 
+-def real_time_trading(symbol, volume):
++    price = mt5.symbol_info_tick(symbol).ask if order_type == "buy" else mt5.symbol_info_tick(symbol).bid
++    trade_request = {
++        "action": mt5.TRADE_ACTION_DEAL,
++        "symbol": symbol,
++        "volume": lot_size,
++        "type": mt5.ORDER_BUY if order_type == "buy" else mt5.ORDER_SELL,
++        "price": price,
++        "deviation": 10,
++        "magic": 123456,
++        "comment": "Python Trade",
++        "type_time": mt5.ORDER_TIME_GTC,
++        "type_filling": mt5.ORDER_FILLING_IOC,
++    }
++
++    result = mt5.order_send(trade_request)
++    if result.retcode != mt5.TRADE_RETCODE_DONE:
++        logging.error(f"Trade failed: {result}")
++    else:
++        logging.info(f"Trade successful: {result}")
++
++def calculate_rule_signal(data):
++    """
++    Generate a rule-based signal using technical indicators like RSI and MACD.
++    """
++    try:
++        # Placeholder calculations for RSI and MACD
++        rsi = 50  # Replace with actual RSI calculation logic
++        macd = 0  # Replace with actual MACD calculation logic
++
++        signal = 0
++        if rsi < 30:
++            signal += 0.5
++        elif rsi > 70:
++            signal -= 0.5
++
++        if macd > 0:
++            signal += 0.5
++        elif macd < 0:
++            signal -= 0.5
++
++        return max(-1, min(1, signal))
++    except Exception as e:
++        logging.error(f"Error calculating rule signal: {e}")
++        return 0
++
++def real_time_decision_pipeline(symbol, lot_size):
++    """
++    Real-time trading logic using MetaTrader 5 integration.
++    """
++    if not initialize_mt5():
++        return
++
+     data_manager = RealTimeDataManager()
+-    trade_manager = FastTradeManager()
+-
+     while True:
+         try:
+             tick_data = data_manager.fetch_tick_data(symbol)
+             processed_data = data_manager.calculate_custom_indicators(tick_data)
+-
+             decision_signal = calculate_rule_signal(processed_data)
+ 
+             if decision_signal > 0.5:
+-                trade_manager.place_trade(symbol, volume, "buy")
++                place_mt5_trade(symbol, lot_size, "buy")
+             elif decision_signal < -0.5:
+-                trade_manager.place_trade(symbol, volume, "sell")
++                place_mt5_trade(symbol, lot_size, "sell")
+ 
+-            time.sleep(1)
++            time.sleep(0.05)
+         except Exception as e:
+             logging.error(f"Error in trading loop: {e}")
++
++    shutdown_mt5()
++
++if __name__ == "__main__":
++    logging.basicConfig(level=logging.INFO)
++    real_time_decision_pipeline("EURUSD", 0.1)
+diff --git a/MetaTrader5-5.0.39.dist-info/REQUESTED b/MetaTrader5-5.0.39.dist-info/REQUESTED
+new file mode 100644
