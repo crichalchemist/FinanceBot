@@ -1,7 +1,8 @@
-from flask import Flask, request, jsonify
 import logging
-import pandas as pd
 import os
+
+import pandas as pd
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -52,4 +53,4 @@ def analyze_trade_data():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    app.run(host= https://20.2.84.42, port=5001, debug=True)

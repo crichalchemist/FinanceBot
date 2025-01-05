@@ -19,7 +19,7 @@ class DataUploader:
             logging.error(f"Error uploading data: {e}")
 
 # Usage Example
-uploader = DataUploader(api_url="http://your-analysis-server/api/trade_data")
+uploader = DataUploader(api_url= http://104.214.168.50:5000/trade_data)
 trade_data = {
     "symbol": "EURUSD",
     "features": {"mid_price": 1.1345, "momentum": 0.002},

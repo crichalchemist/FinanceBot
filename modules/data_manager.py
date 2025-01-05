@@ -1,7 +1,9 @@
-import metatrader5 as mt5
-import pandas as pd
 import logging
 import time
+
+import MetaTrader5 as mt5
+import pandas as pd
+
 
 class RealTimeDataManager:
     def __init__(self):

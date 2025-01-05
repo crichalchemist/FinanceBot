@@ -1,9 +1,11 @@
+import logging
+import time
+
 from data_manager import RealTimeDataManager
+from data_uploader import DataUploader
 from model_manager import OptimizedModelManager
 from trade_manager import FastTradeManager
-from data_uploader import DataUploader
-import time
-import logging
+
 
 def combined_decision_pipeline(symbol, volume, api_url):
     """

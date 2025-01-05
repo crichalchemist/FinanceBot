@@ -9,12 +9,12 @@ from train_model import train_model
 def start_analysis_server():
     """Start the Flask-based analysis API server."""
     logging.info("Starting the analysis server...")
-    analysis_app.run(host='0.0.0.0', port=5001, debug=False)
+    analysis_app.run(host=20.2.84.42, port=5010, debug=False)
 
-def start_decision_pipeline(symbol, volume, api_url):
+def start_decision_pipeline(symbol, volume, API_URL):
     """Start the real-time decision pipeline."""
     logging.info(f"Starting the decision pipeline for {symbol}...")
-    modules.real_time_decision.real_time_decision_pipeline(symbol=symbol, volume=volume, api_url=api_url)
+    modules.real_time_decision.real_time_decision_pipeline(symbol=symbol, volume=volume, api_url=API_URL)
 
 def start_training_process():
     """Start the model training process."""
